@@ -131,11 +131,16 @@ async function connect(demo) {
       true,
     );
   }
+  if (store.get('autoRestore') === '1') await restoreSettings(true);
+  checkAutoLight();
+  clearInterval(autoLightTimer);
+  autoLightTimer = setInterval(checkAutoLight, 60_000);
   startPolling();
 }
 
 function onDisconnected() {
   stopPolling();
+  clearInterval(autoLightTimer);
   state.session = null;
   setConn('off', 'Nicht verbunden');
   $('#screenApp').hidden = true;
@@ -214,6 +219,7 @@ function renderSettings() {
   if (s.cruise !== undefined) $('#swCruise').checked = s.cruise;
   if (s.taillight !== undefined) $('#swTail').checked = s.taillight;
   if (state.live.locked !== undefined) $('#swLock').checked = state.live.locked;
+  renderProfiles();
 }
 
 function renderBattery() {
@@ -262,15 +268,117 @@ async function setSetting(name, value) {
   }
 }
 
-const PRESETS = {
-  range: { kers: 2, cruise: true },
-  comfort: { kers: 0, cruise: true },
-  city: { kers: 1, cruise: false, taillight: true },
-};
+const BUILTIN_PROFILES = [
+  { id: 'range', name: 'Reichweite', values: { kers: 2, cruise: true } },
+  { id: 'comfort', name: 'Komfort', values: { kers: 0, cruise: true } },
+  { id: 'city', name: 'Stadt', values: { kers: 1, cruise: false, taillight: true } },
+];
+const KERS_NAMES = ['schwach', 'mittel', 'stark'];
 
-async function applyPreset(id) {
-  for (const [k, v] of Object.entries(PRESETS[id])) await setSetting(k, v);
-  toast('Profil übernommen');
+function loadJson(key, fallback) {
+  try { return JSON.parse(store.get(key)) ?? fallback; } catch { return fallback; }
+}
+
+function customProfiles() {
+  return loadJson('profiles', []);
+}
+
+function allProfiles() {
+  return [...BUILTIN_PROFILES, ...customProfiles()];
+}
+
+function describe(v) {
+  const parts = [];
+  if (v.kers != null) parts.push(`Rekuperation ${KERS_NAMES[v.kers]}`);
+  if (v.cruise != null) parts.push(`Tempomat ${v.cruise ? 'an' : 'aus'}`);
+  if (v.taillight != null) parts.push(`Licht ${v.taillight ? 'an' : 'aus'}`);
+  return parts.join(' · ');
+}
+
+function profileMatches(p) {
+  return Object.entries(p.values).every(([k, v]) => state.settings[k] === v);
+}
+
+function esc(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+function renderProfiles() {
+  const list = allProfiles();
+  $('#presetList').innerHTML = list
+    .map((p) => {
+      const custom = !BUILTIN_PROFILES.includes(p);
+      return `<button class="preset${profileMatches(p) ? ' active' : ''}" data-preset="${esc(p.id)}">
+        <b>${esc(p.name)}</b><small>${describe(p.values)}</small>
+        ${custom ? `<span class="del" data-del="${esc(p.id)}" title="Löschen">×</span>` : ''}
+      </button>`;
+    })
+    .join('');
+  $('#quickProfiles').innerHTML = list
+    .map((p) => `<button data-preset="${esc(p.id)}" class="${profileMatches(p) ? 'active' : ''}">${esc(p.name)}</button>`)
+    .join('');
+}
+
+async function applyProfile(id) {
+  const p = allProfiles().find((x) => x.id === id);
+  if (!p || !state.session) return;
+  for (const [k, v] of Object.entries(p.values)) await setSetting(k, v);
+  toast(`Profil „${p.name}“ aktiv`);
+}
+
+function saveProfile() {
+  const name = $('#profileName').value.trim();
+  const { kers, cruise, taillight } = state.settings;
+  if (!name) return toast('Gib dem Profil einen Namen', true);
+  if (kers == null) return toast('Noch keine Werte vom Roller gelesen', true);
+  const profiles = customProfiles().filter((p) => p.name !== name);
+  profiles.push({ id: `c${Date.now()}`, name, values: { kers, cruise: !!cruise, taillight: !!taillight } });
+  store.set('profiles', JSON.stringify(profiles));
+  $('#profileName').value = '';
+  renderProfiles();
+  toast(`Profil „${name}“ gespeichert`);
+}
+
+function deleteProfile(id) {
+  store.set('profiles', JSON.stringify(customProfiles().filter((p) => p.id !== id)));
+  renderProfiles();
+}
+
+// ---------- Auto-Licht ----------
+const AUTO_LIGHT = { from: 19, to: 7 };
+function isDark(d = new Date()) {
+  const h = d.getHours();
+  return h >= AUTO_LIGHT.from || h < AUTO_LIGHT.to;
+}
+
+let autoLightTimer;
+function checkAutoLight() {
+  if (store.get('autoLight') !== '1' || !state.session || state.settings.taillight === undefined) return;
+  const want = isDark();
+  if (state.settings.taillight !== want) setSetting('taillight', want);
+}
+
+// ---------- Backup ----------
+function renderBackupInfo() {
+  const b = loadJson('backup', null);
+  setText('backupInfo', b ? `Gesichert: ${describe(b.values)} (${new Date(b.time).toLocaleDateString()})` : 'Noch kein Backup gespeichert');
+  $('#btnRestore').disabled = !b;
+}
+
+function backupSettings() {
+  const { kers, cruise, taillight } = state.settings;
+  if (kers == null) return toast('Noch keine Werte vom Roller gelesen', true);
+  store.set('backup', JSON.stringify({ time: Date.now(), values: { kers, cruise: !!cruise, taillight: !!taillight } }));
+  renderBackupInfo();
+  toast('Einstellungen gesichert');
+}
+
+async function restoreSettings(silent = false) {
+  const b = loadJson('backup', null);
+  if (!b || !state.session) return;
+  const diff = Object.entries(b.values).filter(([k, v]) => state.settings[k] !== v);
+  for (const [k, v] of diff) await setSetting(k, v);
+  if (!silent || diff.length) toast(diff.length ? 'Backup wiederhergestellt' : 'Einstellungen sind schon aktuell');
 }
 
 // ---------- Experte ----------
@@ -342,7 +450,30 @@ function bind() {
   $('#swCruise').addEventListener('change', (e) => setSetting('cruise', e.target.checked));
   $('#swTail').addEventListener('change', (e) => setSetting('taillight', e.target.checked));
   $('#swLock').addEventListener('change', (e) => setSetting('lock', e.target.checked));
-  $$('.preset').forEach((b) => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+  const onProfileClick = (e) => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      e.stopPropagation();
+      if (confirm('Profil löschen?')) deleteProfile(del.dataset.del);
+      return;
+    }
+    const b = e.target.closest('[data-preset]');
+    if (b) applyProfile(b.dataset.preset);
+  };
+  $('#presetList').addEventListener('click', onProfileClick);
+  $('#quickProfiles').addEventListener('click', onProfileClick);
+  $('#btnSaveProfile').addEventListener('click', saveProfile);
+
+  $('#swAutoLight').checked = store.get('autoLight') === '1';
+  $('#swAutoLight').addEventListener('change', (e) => {
+    store.set('autoLight', e.target.checked ? '1' : '0');
+    checkAutoLight();
+  });
+  setText('autoLightRange', `${AUTO_LIGHT.from}–${AUTO_LIGHT.to}`);
+  $('#swAutoRestore').checked = store.get('autoRestore') === '1';
+  $('#swAutoRestore').addEventListener('change', (e) => store.set('autoRestore', e.target.checked ? '1' : '0'));
+  $('#btnBackup').addEventListener('click', backupSettings);
+  $('#btnRestore').addEventListener('click', () => restoreSettings());
 
   $('#btnRegRead').addEventListener('click', regRead);
   $('#btnRegWrite').addEventListener('click', regWrite);
@@ -352,6 +483,8 @@ function bind() {
 function init() {
   bind();
   renderBrand();
+  renderProfiles();
+  renderBackupInfo();
   if (!bluetoothAvailable()) {
     $('#bleWarning').hidden = false;
     $('#btnConnect').disabled = true;

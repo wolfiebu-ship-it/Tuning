@@ -8,7 +8,7 @@ Sie läuft direkt im Browser, ohne Installation und ohne Build-Schritt.
 | Bereich | Inhalt |
 |---|---|
 | **Cockpit** | Live-Tempo, Akkustand, Fahrt-/Gesamtkilometer, Ø-Tempo, Temperatur, Seriennummer, ESC/BMS-Firmware, Fehlercode |
-| **Tuning** | Rekuperation (KERS schwach/mittel/stark), Tempomat, Rücklicht dauerhaft an, Wegfahrsperre, Fahrprofile (Reichweite, Komfort, Stadt), Anleitung zur Custom Firmware |
+| **Tuning** | Rekuperation (KERS schwach/mittel/stark), Tempomat, Rücklicht dauerhaft an, Wegfahrsperre, Fahrprofile (Reichweite, Komfort, Stadt) plus eigene Profile, Profil-Schnellumschalter im Cockpit, Auto-Licht (19–7 Uhr), Einstellungs-Backup mit automatischer Wiederherstellung |
 | **Akku** | Spannung, Strom, Leistung, Restkapazität, Temperaturen, alle 10 Zellspannungen mit Balance-Bewertung |
 | **Experte** | Beliebige ESC/BMS-Register lesen und schreiben, Protokoll-Log (Hex) |
 | **Demo-Modus** | Simulierter Roller zum Ausprobieren ohne Hardware |

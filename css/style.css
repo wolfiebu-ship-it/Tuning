@@ -117,6 +117,7 @@ select, input {
 }
 .card h2 + .row, .row:first-child { border-top: 0; }
 .row small { display: block; font-size: 13px; }
+.row > div:first-child { flex: 1; min-width: 0; }
 .row h2 { margin: 0; }
 
 .switch { position: relative; width: 50px; height: 30px; flex: none; }
@@ -140,6 +141,25 @@ select, input {
 .preset b { display: block; margin-bottom: 4px; }
 .preset small { font-size: 12px; }
 .preset:hover { border-color: var(--accent); }
+
+.preset { position: relative; }
+.preset.active { border-color: var(--accent); }
+.preset .del {
+  position: absolute; top: 6px; right: 8px; color: var(--muted); font-size: 18px; line-height: 1;
+  padding: 2px 6px; border-radius: 6px;
+}
+.preset .del:hover { color: var(--danger); }
+.save-profile { margin-top: 12px; margin-bottom: 0; }
+.save-profile .btn { white-space: nowrap; }
+.btn-pair { display: flex; gap: 6px; }
+
+.quick { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 2px; }
+.quick:empty { display: none; }
+.quick button {
+  flex: none; background: var(--card); border: 1px solid var(--line); color: var(--text);
+  border-radius: 999px; padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer;
+}
+.quick button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 .steps { padding-left: 20px; }
 .steps li { margin-bottom: 6px; }
@@ -180,6 +200,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .6); }
   .stats { grid-template-columns: repeat(2, 1fr); }
   .presets { grid-template-columns: 1fr; }
   .cells { grid-template-columns: repeat(5, 1fr); gap: 4px; }
-  .row { flex-wrap: wrap; }
+  .row:has(.seg), .row:has(.btn-pair) { flex-wrap: wrap; }
   .row .seg { width: 100%; }
+  .save-profile { flex-wrap: wrap; }
+  .save-profile .btn { width: 100%; }
 }

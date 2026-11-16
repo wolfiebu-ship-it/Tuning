@@ -1,5 +1,5 @@
 // Offline-Cache für die App-Dateien
-const CACHE = 'scootertune-v1';
+const CACHE = 'scootertune-v2';
 const FILES = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest', 'icons/icon.svg',
   'js/app.js', 'js/ble.js', 'js/demo.js', 'js/models.js', 'js/protocol.js', 'js/registers.js', 'js/session.js',

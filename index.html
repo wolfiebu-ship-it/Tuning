@@ -62,6 +62,7 @@
 
     <!-- Cockpit -->
     <section class="tab" data-tab="dash">
+      <div class="quick" id="quickProfiles"></div>
       <div class="card gauge-card">
         <div class="gauge">
           <svg viewBox="0 0 200 120" aria-hidden="true">
@@ -97,10 +98,10 @@
       <div class="card">
         <h2>Fahrprofile</h2>
         <p class="muted">Ein Tipp setzt mehrere Einstellungen auf einmal.</p>
-        <div class="presets">
-          <button class="preset" data-preset="range"><b>Reichweite</b><small>Rekuperation stark · Tempomat an</small></button>
-          <button class="preset" data-preset="comfort"><b>Komfort</b><small>Rekuperation schwach · Tempomat an</small></button>
-          <button class="preset" data-preset="city"><b>Stadt</b><small>Rekuperation mittel · Licht an · Tempomat aus</small></button>
+        <div class="presets" id="presetList"></div>
+        <div class="reg-form save-profile">
+          <input id="profileName" placeholder="Name für eigenes Profil" maxlength="20">
+          <button id="btnSaveProfile" class="btn">Aktuelle Werte speichern</button>
         </div>
       </div>
 
@@ -125,6 +126,25 @@
         <div class="row">
           <div><b>Wegfahrsperre</b><small>Sperrt den Motor</small></div>
           <label class="switch"><input type="checkbox" id="swLock"><span></span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Automatik &amp; Backup</h2>
+        <div class="row">
+          <div><b>Auto-Licht</b><small>Rücklicht zwischen <span id="autoLightRange">19–7</span> Uhr automatisch dauerhaft an</small></div>
+          <label class="switch"><input type="checkbox" id="swAutoLight"><span></span></label>
+        </div>
+        <div class="row">
+          <div><b>Einstellungen beim Verbinden wiederherstellen</b><small>Spielt dein Backup nach einem Reset automatisch wieder auf</small></div>
+          <label class="switch"><input type="checkbox" id="swAutoRestore"><span></span></label>
+        </div>
+        <div class="row">
+          <div><b>Backup</b><small id="backupInfo">Noch kein Backup gespeichert</small></div>
+          <div class="btn-pair">
+            <button id="btnBackup" class="btn small">Sichern</button>
+            <button id="btnRestore" class="btn small">Wiederherstellen</button>
+          </div>
         </div>
       </div>
 
