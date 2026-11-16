@@ -1,0 +1,11 @@
+{
+  "name": "scootertune",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Web-Bluetooth-App für Xiaomi- und Segway-Ninebot-E-Scooter",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node --test test/*.test.mjs"
+  }
+}

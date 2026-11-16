@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1115">
+  <title>ScooterTune</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="icons/icon.svg" alt="" width="28" height="28">
+      <span>ScooterTune</span>
+    </div>
+    <div class="conn">
+      <span id="connDot" class="dot"></span>
+      <span id="connLabel">Nicht verbunden</span>
+    </div>
+  </header>
+
+  <!-- Verbindungs-Bildschirm -->
+  <main id="screenConnect" class="screen">
+    <section class="card hero">
+      <h1>Roller verbinden</h1>
+      <p class="muted">Xiaomi Mi und Segway-Ninebot per Bluetooth auslesen und einstellen.</p>
+
+      <label class="field">
+        <span>Hersteller</span>
+        <div class="seg" id="brandSeg">
+          <button data-value="xiaomi" class="active">Xiaomi</button>
+          <button data-value="ninebot">Segway-Ninebot</button>
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Modell</span>
+        <select id="modelSelect"></select>
+      </label>
+
+      <div id="modelHint" class="hint"></div>
+
+      <button id="btnConnect" class="btn primary big">Per Bluetooth verbinden</button>
+      <button id="btnDemo" class="btn ghost big">Demo-Modus (ohne Roller)</button>
+      <p id="bleWarning" class="warn" hidden>
+        Dein Browser unterstützt kein Web Bluetooth. Nutze Chrome oder Edge auf Android, Windows, macOS oder Linux.
+        Auf dem iPhone geht es mit der App „Bluefy“. Den Demo-Modus kannst du überall testen.
+      </p>
+    </section>
+  </main>
+
+  <!-- App nach Verbindung -->
+  <main id="screenApp" class="screen" hidden>
+    <nav class="tabs" id="tabs">
+      <button data-tab="dash" class="active">Cockpit</button>
+      <button data-tab="tune">Tuning</button>
+      <button data-tab="battery">Akku</button>
+      <button data-tab="expert">Experte</button>
+    </nav>
+
+    <!-- Cockpit -->
+    <section class="tab" data-tab="dash">
+      <div class="card gauge-card">
+        <div class="gauge">
+          <svg viewBox="0 0 200 120" aria-hidden="true">
+            <path class="g-bg" d="M20 110 A80 80 0 0 1 180 110" />
+            <path id="gaugeArc" class="g-fg" d="M20 110 A80 80 0 0 1 180 110" />
+          </svg>
+          <div class="gauge-val"><span id="vSpeed">0.0</span><small>km/h</small></div>
+        </div>
+        <div class="stats">
+          <div><small>Akku</small><b id="vBattery">–</b></div>
+          <div><small>Fahrt</small><b id="vTrip">–</b></div>
+          <div><small>Gesamt</small><b id="vTotal">–</b></div>
+          <div><small>Ø Tempo</small><b id="vAvg">–</b></div>
+          <div><small>Temperatur</small><b id="vTemp">–</b></div>
+          <div><small>Laufzeit</small><b id="vUptime">–</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Fahrzeug</h2>
+        <dl class="kv">
+          <dt>Modell</dt><dd id="iModel">–</dd>
+          <dt>Gerät</dt><dd id="iDevice">–</dd>
+          <dt>Seriennummer</dt><dd id="iSerial">–</dd>
+          <dt>ESC-Firmware</dt><dd id="iEsc">–</dd>
+          <dt>BMS-Firmware</dt><dd id="iBms">–</dd>
+          <dt>Fehlercode</dt><dd id="iError">–</dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Tuning -->
+    <section class="tab" data-tab="tune" hidden>
+      <div class="card">
+        <h2>Fahrprofile</h2>
+        <p class="muted">Ein Tipp setzt mehrere Einstellungen auf einmal.</p>
+        <div class="presets">
+          <button class="preset" data-preset="range"><b>Reichweite</b><small>Rekuperation stark · Tempomat an</small></button>
+          <button class="preset" data-preset="comfort"><b>Komfort</b><small>Rekuperation schwach · Tempomat an</small></button>
+          <button class="preset" data-preset="city"><b>Stadt</b><small>Rekuperation mittel · Licht an · Tempomat aus</small></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Einstellungen</h2>
+        <div class="row">
+          <div><b>Rekuperation (KERS)</b><small>Bremsenergie-Rückgewinnung</small></div>
+          <div class="seg small" id="kersSeg">
+            <button data-value="0">Schwach</button>
+            <button data-value="1">Mittel</button>
+            <button data-value="2">Stark</button>
+          </div>
+        </div>
+        <div class="row">
+          <div><b>Tempomat</b><small>Hält das Tempo nach einigen Sekunden</small></div>
+          <label class="switch"><input type="checkbox" id="swCruise"><span></span></label>
+        </div>
+        <div class="row">
+          <div><b>Rücklicht dauerhaft an</b><small>Sonst leuchtet es nur beim Bremsen</small></div>
+          <label class="switch"><input type="checkbox" id="swTail"><span></span></label>
+        </div>
+        <div class="row">
+          <div><b>Wegfahrsperre</b><small>Sperrt den Motor</small></div>
+          <label class="switch"><input type="checkbox" id="swLock"><span></span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Tempo &amp; Leistung freischalten</h2>
+        <p>
+          Die Original-Firmware lässt sich nicht über Bluetooth auf mehr Tempo umstellen. Höchstgeschwindigkeit,
+          Motorstrom, Anfahrverhalten und Bremskraft änderst du mit einer <b>Custom Firmware (CFW)</b>.
+        </p>
+        <div id="cfwStatus" class="hint"></div>
+        <ol class="steps">
+          <li>Prüfe, ob dein Modell unterstützt wird (siehe oben).</li>
+          <li>Bei verschlüsselter BLE-Firmware: zuerst ein BLE-Downgrade (z. B. per ST-Link oder „ScooterHacking Utility“).</li>
+          <li>Konfiguriere die Firmware über <a href="https://scooterhacking.org" target="_blank" rel="noopener">scooterhacking.org</a>:
+            Tempolimit je Modus, Motorstrom, Anfahrhilfe, KERS-Stärke.</li>
+          <li>Flashe sie mit der App „ScooterHacking Utility“ (Android) oder „XiaoDash“.</li>
+          <li>Danach kannst du den Roller hier weiter auslesen und einstellen.</li>
+        </ol>
+        <div class="warn">
+          <b>Rechtlicher Hinweis:</b> In Deutschland sind E-Scooter auf 20 km/h begrenzt (eKFV). Mit
+          getunter Firmware erlöschen Betriebserlaubnis und Versicherungsschutz. Wer damit im Straßenverkehr fährt,
+          macht sich unter Umständen strafbar (Fahren ohne Versicherung). Nutze Tuning nur auf Privatgelände.
+        </div>
+      </div>
+    </section>
+
+    <!-- Akku -->
+    <section class="tab" data-tab="battery" hidden>
+      <div class="card">
+        <h2>Akku (BMS)</h2>
+        <div class="stats">
+          <div><small>Ladung</small><b id="bPercent">–</b></div>
+          <div><small>Spannung</small><b id="bVoltage">–</b></div>
+          <div><small>Strom</small><b id="bCurrent">–</b></div>
+          <div><small>Leistung</small><b id="bPower">–</b></div>
+          <div><small>Restkapazität</small><b id="bCapacity">–</b></div>
+          <div><small>Temperatur</small><b id="bTemp">–</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Zellspannungen</h2>
+        <div id="cells" class="cells"></div>
+        <p id="cellDiff" class="muted"></p>
+      </div>
+    </section>
+
+    <!-- Experte -->
+    <section class="tab" data-tab="expert" hidden>
+      <div class="card">
+        <h2>Register lesen / schreiben</h2>
+        <p class="warn small">Nur nutzen, wenn du weißt, was du tust. Falsche Werte können Einstellungen verstellen.</p>
+        <div class="reg-form">
+          <select id="regTarget"><option value="esc">ESC</option><option value="bms">BMS</option></select>
+          <input id="regAddr" placeholder="Register (hex), z. B. 7B" maxlength="2">
+          <input id="regLen" placeholder="Bytes" value="2" inputmode="numeric">
+          <button id="btnRegRead" class="btn">Lesen</button>
+        </div>
+        <div class="reg-form">
+          <input id="regValue" placeholder="Wert (hex, 16 Bit), z. B. 0002" maxlength="4">
+          <button id="btnRegWrite" class="btn danger">Schreiben</button>
+        </div>
+        <pre id="regResult" class="mono"></pre>
+      </div>
+      <div class="card">
+        <div class="row"><h2>Protokoll</h2><button id="btnClearLog" class="btn ghost small">Leeren</button></div>
+        <pre id="log" class="mono log"></pre>
+      </div>
+    </section>
+
+    <button id="btnDisconnect" class="btn ghost big">Trennen</button>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <dialog id="disclaimer">
+    <h2>Bevor du loslegst</h2>
+    <p>Mit dieser App liest du deinen Roller aus und änderst Einstellungen. Das passiert auf eigenes Risiko.</p>
+    <ul>
+      <li>Änderungen an der Firmware können die Garantie beenden.</li>
+      <li>Auf öffentlichen Straßen in Deutschland gilt: maximal 20 km/h, gültige Versicherungsplakette.</li>
+      <li>Getunte Roller nur auf Privatgelände fahren.</li>
+    </ul>
+    <form method="dialog"><button class="btn primary big" value="ok">Verstanden</button></form>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
